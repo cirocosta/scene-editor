@@ -1,0 +1,25 @@
+{
+  "name": "scene-editor",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "build-deps": "./node_modules/.bin/babel lib/obj-parser/ -d lib/obj-parser/dist"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cirocosta/scene-editor.git"
+  },
+  "keywords": [
+    "webgl"
+  ],
+  "author": "",
+  "license": "GPLv3",
+  "bugs": {
+    "url": "https://github.com/cirocosta/scene-editor/issues"
+  },
+  "homepage": "https://github.com/cirocosta/scene-editor",
+  "devDependencies": {
+    "babel": "^5.2.17"
+  }
+}
