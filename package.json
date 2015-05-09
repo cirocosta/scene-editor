@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build-deps": "./node_modules/.bin/babel lib/obj-parser/ -d lib/obj-parser/dist"
+    "build-deps":  "./node_modules/.bin/babel lib -d assets/js"
   },
   "repository": {
     "type": "git",

@@ -280,4 +280,9 @@ function getNormal(a, b, c) {
 
   return normal;
 }
+
+var ObjParser = {
+  parse: parse,
+  getNormal: getNormal
+};
 // final buffer data
