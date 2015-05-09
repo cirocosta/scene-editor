@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Obj Reader</title>
+  <link rel="stylesheet" href="index.css">
+</head>
+<body>
+  <header>
+    <h1><code>.OBJ</code> reader!</h1>
+
+    <div class="fileupload">
+      <input type="file" id="fileinput" name="fileinput"/>
+      <p hidden></p>
+      <button>SELECT</button>
+      <button>Commands</button>
+
+      <ul class="commands-list">
+        <li><button class="command-rotateX">Rotate X</button></li>
+        <li><button class="command-rotateY">Rotate Y</button></li>
+        <li><button class="command-rotateZ">Rotate Z</button></li>
+        <li><button class="command-toggleProjection">Tg. Projection</button></li>
+        <li><button class="command-toggleRotation">Tg. Rotation</button></li>
+        <li><button class="command-toggleMeshgrid">(Meshgrid|Solid)</button></li>
+        <li><button class="command-toggleShading">(Smooth|Flat) Shading</button></li>
+      </ul>
+    </div>
+  </header>
+
+  <main>
+    <canvas>
+    </canvas>
+  </main>
+
+  <footer>
+    <p>contribute to it on <a href="https://github.com/cirocosta/mac0420-cg">github</a></p>
+  </footer>
+
+<!-- per-vertex shaders -->
+<script id="vshader" type="x-shader/vertex-shader">
+attribute vec4 a_Position;
+attribute vec4 a_Normal;
+
+vec4 mat_ambient = vec4(1.0, 1.0, 1.0, 1.0);
+vec4 mat_diffuse = vec4(1.0, 1.0, 1.0, 1.0);
+vec4 mat_specular = vec4(1.0, 1.0, 1.0, 1.0);
+
+vec4 lightPosition = vec4(0.0, 0.0, 10.0, 0.0);
+vec4 lightAmbient = vec4(0.2, 0.2, 0.2, 1.0);
+vec4 lightDiffuse = vec4(1.0, 1.0, 1.0, 1.0);
+vec4 lightSpecular = vec4(1.0, 1.0, 1.0, 1.0);
+float shininess = 100.0;
+
+vec4 ambient = lightAmbient * mat_ambient;
+
+uniform mat4 u_NormalMatrix;    // (M^{-1})^T
+uniform mat4 u_ModelMatrix;     // ModelMatrix
+uniform mat4 u_MvpMatrix;       // model-view-projection matrix
+
+varying vec4 v_Color;
+
+void main ()
+{
+  vec4 pos = -(u_ModelMatrix * a_Position); // world coordinate
+  vec4 L = normalize(lightPosition - vec4(pos));
+  vec4 V = normalize(pos);
+  vec4 H = normalize(L + V);
+  vec4 N = normalize(vec4(u_NormalMatrix * a_Normal));
+
+  float Kd = max(dot(N,L), 0.0);
+  vec4 diffuse = Kd * lightDiffuse * mat_diffuse;
+
+  float Ks = pow(max(dot(N,H), 0.0), shininess);
+  vec4 specular = Ks * lightSpecular * mat_specular;
+
+  v_Color = vec4(ambient + diffuse + specular);
+  gl_Position = u_MvpMatrix * a_Position;
+}
+</script>
+
+<script id="fshader" type="x-shader/fragment-shader">
+precision mediump float;
+varying vec4 v_Color;
+void main ()
+{
+  gl_FragColor = v_Color;
+}
+</script>
+
+<!-- per-fragment shaders -->
+
+<script id="vshader-fragment" type="x-shader/vertex-shader">
+attribute vec4 a_Position;
+attribute vec4 a_Normal;
+
+uniform mat4 u_NormalMatrix;
+uniform mat4 u_ModelMatrix;
+uniform mat4 u_MvpMatrix;
+
+varying vec4 v_Normal;
+varying vec4 v_Position;
+
+void main ()
+{
+  gl_Position = u_MvpMatrix * a_Position;
+
+  v_Position = -vec4(u_ModelMatrix * a_Position);
+  v_Normal = normalize(vec4(u_NormalMatrix * a_Normal));
+}
+</script>
+
+<script id="fshader-fragment" type="x-shader/fragment-shader">
+precision mediump float;
+
+vec4 mat_ambient = vec4(1.0, 1.0, 1.0, 1.0);
+vec4 mat_diffuse = vec4(1.0, 1.0, 1.0, 1.0);
+vec4 mat_specular = vec4(1.0, 1.0, 1.0, 1.0);
+
+vec4 lightPosition = vec4(0.0, 0.0, 10.0, 0.0);
+vec4 lightAmbient = vec4(0.2, 0.2, 0.2, 1.0);
+vec4 lightDiffuse = vec4(1.0, 1.0, 1.0, 1.0);
+vec4 lightSpecular = vec4(1.0, 1.0, 1.0, 1.0);
+float shininess = 100.0;
+
+vec4 ambient = lightAmbient * mat_ambient;
+
+varying vec4 v_Normal;
+varying vec4 v_Position;
+
+void main ()
+{
+  vec4 L = normalize(lightPosition - vec4(v_Position));
+  vec4 V = normalize(v_Position);
+  vec4 H = normalize(L + V);
+
+  float Kd = max(dot(v_Normal,L), 0.0);
+  vec4 diffuse = Kd * lightDiffuse * mat_diffuse;
+
+  float Ks = pow(max(dot(v_Normal,H), 0.0), shininess);
+  vec4 specular = Ks * lightSpecular * mat_specular;
+
+  gl_FragColor = vec4(ambient + diffuse + specular);
+}
+</script>
+
+
+<script src="../assets/js/gl-matrix-min.js"></script>
+<script src="../assets/js/WebGLUtils.js"></script>
+<script src="../assets/js/ObjParser.js"></script>
+<script src="./index.js"></script>
+</body>
+</html>
