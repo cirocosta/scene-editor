@@ -68,8 +68,19 @@
     ELEMS.fileSelect.addEventListener('click', (ev) => {
       ELEMS.fileinput.click();
     });
-
   });
+
+  // key and mouse bindings
+  Keyer.bindDown('shift', function () {
+    console.log('hue');
+  }).bindDown('a', function () {
+    console.log('lol');
+  }).bindMouseDown('left', function () {
+    console.log('left');
+  }).process(window);
+
+  console.log(Keyer);
+
 
   root.ELEMS = ELEMS;
 })(window);

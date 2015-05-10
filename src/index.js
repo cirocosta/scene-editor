@@ -127,6 +127,7 @@ function draw_obj (obj) {
   return INDICES.length;
 }
 
+// TODO remove this and use Camera.updateProjection
 function updateProjection (w, h) {
   var ar = w/h;
 
