@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Obj Reader</title>
+  <title>Scene Editor</title>
   <link rel="stylesheet" href="index.css">
 </head>
 <body>
@@ -10,10 +10,12 @@
     <h1><code>.OBJ</code> reader!</h1>
 
     <div class="fileupload">
+      <!-- TODO add support for multiple input -->
       <input type="file" id="fileinput" name="fileinput"/>
-      <p hidden></p>
-      <button>SELECT</button>
-      <button>Commands</button>
+
+      <button id="b-select">SELECT</button>
+      <button id="b-gallery">Gallery</button>
+      <button id="b-help">Help</button>
 
       <ul class="commands-list">
         <li><button class="command-rotateX">Rotate X</button></li>
@@ -33,6 +35,7 @@
   </main>
 
   <footer>
+    <div id="mode-indicator">WORLD</div>
     <p>contribute to it on <a href="https://github.com/cirocosta/mac0420-cg">github</a></p>
   </footer>
 
@@ -148,6 +151,7 @@ void main ()
 <script src="../assets/js/ObjParser.js"></script>
 <script src="./models/Object3D.js"></script>
 <script src="./models/Quaternion.js"></script>
+<script src="./frontend.js"></script>
 <script src="./index.js"></script>
 </body>
 </html>

@@ -1,4 +1,5 @@
-Object3D = function () {
+
+function Object3D (data) {
 	this.name = '';
 	this.id = 0;
 	this.up = [0, 0, 0];
@@ -10,7 +11,7 @@ Object3D = function () {
 	this.flipSided = false;
 	this.renderDepth = null;
 	this.rotationAutoUpdate = true;
-	this.matrix = mat4.create(); 
+	this.matrix = mat4.create();
 	this.matrixAutoUpdate = true;
 	this.quaternion = new Quaternion();
 	this.useQuaternion = true;
@@ -22,18 +23,29 @@ Object3D = function () {
 	this.frustumCulled = true;
 	this._vector = vec3.create();
 	this.new=true;
-    this.scale= 0;
-    this.center_of_mass= [0, 0, 0];
-    this.vertices_normals= []; // indices to obtain 'normals' prop
-    this.vertices_coords=[]; // coordinates that are references to actual vertices
-    this.smooth_normals= [];
-    this.flat_normals= [];
-    this.vertices= [];
-    this.indices= [];
+
+  this.scale= 0;
+  this.center_of_mass = new Float32Array([0.0, 0.0, 0]);
+  this.vertices_normals= []; // indices to obtain 'normals' prop
+  this.vertices_coords=[]; // coordinates that are references to actual vertices
+  this.smooth_normals= [];
+  this.flat_normals= [];
+  this.vertices= [];
+  this.indices= [];
+
+  this.indices = data.indices;
+  this.center_of_mass = data.center_of_mass;
+  this.vertices_normals = data.vertices_normals;
+  this.vertices_coords = data.vertices_coords;
+  this.smooth_normals = data.smooth_normals;
+  this.flat_normals = data.flat_normals;
+  this.vertices = data.vertices;
+  this.scale = data.scale;
+  this.new = true;
+  this.id = data.id
 };
 
 Object3D.prototype = {
-
 	constructor: Object3D,
 
 	translate: function ( distance, axis ) {
@@ -99,4 +111,5 @@ Object3D.prototype = {
 
 
 };
+
 Object3DCount = 0;

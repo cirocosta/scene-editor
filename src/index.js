@@ -1,5 +1,10 @@
 'use strict';
-var contObjects=0;
+
+/**
+ * Main scene control and instantiation
+ */
+
+var countObjects=0;
 var _rotating = {
   ROTATE_X: false,
   ROTATE_Y: false,
@@ -18,33 +23,8 @@ var _smoothShading = false;
 var _pressed = null;
 var _perspective = true;
 
+var ELEMS = window.ELEMS;
 const deg_to_rad = (deg) => deg*Math.PI/180.0;
-const ELEMS = {
-  canvas: document.querySelector('canvas'),
-
-  fileinput: document.querySelector('.fileupload input'),
-  filebtn: document.querySelector('.fileupload button'),
-  filename: document.querySelector('.fileupload p'),
-  // gallery: document.querySelector('.fileupload-gallery'),
-
-  vshader: document.getElementById('vshader'),
-  fshader: document.getElementById('fshader'),
-
-  vshader_fragment: document.getElementById('vshader-fragment'),
-  fshader_fragment: document.getElementById('fshader-fragment'),
-
-  // rotate: document.querySelector('.command-rotate'),
-  // translate: document.querySelector('.command-translate'),
-  // scale: document.querySelector('.command-scale'),
-
-  rotateX: document.querySelector('.command-rotateX'),
-  rotateY: document.querySelector('.command-rotateY'),
-  rotateZ: document.querySelector('.command-rotateZ'),
-  toggleProjection: document.querySelector('.command-toggleProjection'),
-  toggleRotation: document.querySelector('.command-toggleRotation'),
-  toggleMeshgrid: document.querySelector('.command-toggleMeshgrid'),
-  toggleShading: document.querySelector('.command-toggleShading'),
-};
 
 function triggerRotation (which, flag) {
   _rotating[which] = flag;
@@ -67,20 +47,6 @@ ELEMS.toggleProjection.addEventListener('click', (ev) => {
   _perspective = !_perspective;
 });
 
-ELEMS.toggleRotation.addEventListener('click', (ev) => {
-  triggerRotation('ROTATE_X', _rotating['ROTATE_X'] = !_rotating['ROTATE_X']);
-  triggerRotation('ROTATE_Y', _rotating['ROTATE_Y'] = !_rotating['ROTATE_Y']);
-  triggerRotation('ROTATE_Z', _rotating['ROTATE_Z'] = !_rotating['ROTATE_Z']);
-});
-
-ELEMS.rotateX.addEventListener('mousedown', triggerRotation.bind(null, 'ROTATE_X', true));
-ELEMS.rotateY.addEventListener('mousedown', triggerRotation.bind(null, 'ROTATE_Y', true));
-ELEMS.rotateZ.addEventListener('mousedown', triggerRotation.bind(null, 'ROTATE_Z', true));
-
-ELEMS.rotateX.addEventListener('mouseup', triggerRotation.bind(null, 'ROTATE_X', false));
-ELEMS.rotateY.addEventListener('mouseup', triggerRotation.bind(null, 'ROTATE_Y', false));
-ELEMS.rotateZ.addEventListener('mouseup', triggerRotation.bind(null, 'ROTATE_Z', false));
-
 var current_file, obj;
 var VERTICES, INDICES, NORMALS;
 var all_vertices, all_indices, all_normals;
@@ -92,20 +58,22 @@ var V = mat4.create();    // view
 var P = mat4.create();    // perspective
 var VM = mat4.create();   // model-view
 var PVM = mat4.create();  // model-view-perspective
-var objsArray=[3]; // minimum 3 objects;
-var objActual = { 
-      'new': true,
-      scale: 0,
-      center_of_mass: [0, 0, 0],
-      vertices_normals: [], // indices to obtain 'normals' prop
-      vertices_coords: [], // coordinates that are references to actual
-							// vertices
-      smooth_normals: [],
-      flat_normals: [],
-      vertices: [],
-      indices: [] };
+
+var objActual = {
+  'new': true,
+  scale: 0,
+  center_of_mass: new Float32Array([0.0, 0.0, 0.0]),
+  vertices_normals: [], // indices to obtain 'normals' prop
+  vertices_coords: [], // coordinates that are references to actual
+          // vertices
+  smooth_normals: [],
+  flat_normals: [],
+  vertices: [],
+  indices: []
+};
 var obj = [];
-const resize = WebGLUtils.genResizeFun(ELEMS.canvas, gl, (w, h, shouldDraw) => {
+
+const resizeFun = WebGLUtils.genResizeFun(ELEMS.canvas, gl, (w, h, shouldDraw) => {
   updateProjection(w, h);
   shouldDraw && draw();
 });
@@ -113,6 +81,8 @@ const resize = WebGLUtils.genResizeFun(ELEMS.canvas, gl, (w, h, shouldDraw) => {
 WebGLUtils.Shaders.initFromElems(gl, ELEMS.vshader_fragment, ELEMS.fshader_fragment);
 gl.clearColor(0.0, 0.0, 0.0, 1.0);
 gl.enable(gl.DEPTH_TEST);
+
+var glEventReady = new CustomEvent('glReady', {});
 
 const LOCATIONS = WebGLUtils.Shaders.getLocations(gl, [
   'a_Position', 'a_Normal',
@@ -130,21 +100,20 @@ gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
 /**
  * Draws the corresponding OBJ loaded.
- * 
+ *
  * @param {Object}
  *            obj object obtained from ObjParser::parse
  */
 function draw_obj (obj) {
   if (!obj)
     return 0;
-	
+
     VERTICES = new Float32Array(obj.vertices);
     INDICES = new Uint16Array(obj.indices);
     if (_smoothShading)
       NORMALS = new Float32Array(obj.smooth_normals);
     else
       NORMALS = new Float32Array(obj.flat_normals);
-
 
   gl.bindBuffer(gl.ARRAY_BUFFER, VBUFFER);
   gl.bufferData(gl.ARRAY_BUFFER, VERTICES, gl.STATIC_DRAW);
@@ -154,7 +123,7 @@ function draw_obj (obj) {
 
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, IBUFFER);
   gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, INDICES, gl.STATIC_DRAW);
-	
+
   return INDICES.length;
 }
 
@@ -178,7 +147,7 @@ function draw () {
   mat4.lookAt(V, [0.0, 0.0, 10.0],  // eye
                  [0.0, 0.0, 0.0],   // at
                  [0.0, 1.0, 0.0]);  // up
-				 
+
   obj.forEach(function (o) {
 	  var N_INDICES = draw_obj(o);
 	  mat4.multiply(VM, V, o.matrix);
@@ -199,48 +168,10 @@ function draw () {
 	  else
 		gl.drawElements(gl.LINES, N_INDICES, gl.UNSIGNED_SHORT, 0);
   });
-  
+
 }
 
-ELEMS.fileinput.addEventListener('change', (ev) => {
-  var file = ev.target.files && ev.target.files[0];
-  var reader = new FileReader();
-
-  if (!file)
-    console.error('Error while handling file.', file);
-
-  ELEMS.filename.hidden = false;
-  ELEMS.filename.innerHTML = file.name;
-  current_file = file;
-
-  reader.onload = (ev) => {
-    objActual = ObjParser.parse(ev.target.result);
-	var o= new Object3D();
-	o.indices = objActual.indices;
-	o.center_of_mass=objActual.center_of_mass;
-	o.vertices_normals=objActual.vertices_normals;
-	o.vertices_coords=objActual.vertices_coords;
-	o.smooth_normals=objActual.smooth_normals;
-	o.flat_normals=objActual.flat_normals;
-	o.vertices=objActual.vertices;
-	o.scale=objActual.scale;
-	o.new=true;
-	o.id=contObjects;
-	o=ajustToLoad(o);
-	obj.push(o);
-    resize(false);
-   	contObjects++;
-	draw();
-  };
-
-  reader.readAsText(file);
-});
-
-window.addEventListener('resize', resize);
-
-ELEMS.filebtn.addEventListener('click', (ev) => {
-  ELEMS.fileinput.click();
-});
+window.addEventListener('resize', resizeFun);
 
 function loop () {
   window.requestAnimationFrame(loop);
@@ -252,7 +183,12 @@ function loop () {
 }
 
 function ajustToLoad (object){
-  mat4.scale(object.matrix, object.matrix, [object.scale, object.scale, object.scale]);
-  mat4.translate(object.matrix, object.matrix, object.center_of_mass.map((el) => -el));  
+  mat4.scale(object.matrix, object.matrix,
+            [object.scale, object.scale, object.scale]);
+  mat4.translate(object.matrix, object.matrix,
+                 object.center_of_mass.map((el) => -el));
+
   return object;
 }
+
+window.dispatchEvent(glEventReady);
