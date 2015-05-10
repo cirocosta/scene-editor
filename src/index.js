@@ -1,5 +1,5 @@
 'use strict';
-
+var contObjects=0;
 var _rotating = {
   ROTATE_X: false,
   ROTATE_Y: false,
@@ -83,6 +83,7 @@ ELEMS.rotateZ.addEventListener('mouseup', triggerRotation.bind(null, 'ROTATE_Z',
 
 var current_file, obj;
 var VERTICES, INDICES, NORMALS;
+var all_vertices, all_indices, all_normals;
 const gl = WebGLUtils.setupWebGL(ELEMS.canvas);
 
 var M = mat4.create();    // model
@@ -91,7 +92,19 @@ var V = mat4.create();    // view
 var P = mat4.create();    // perspective
 var VM = mat4.create();   // model-view
 var PVM = mat4.create();  // model-view-perspective
-
+var objsArray=[3]; // minimum 3 objects;
+var objActual = { 
+      'new': true,
+      scale: 0,
+      center_of_mass: [0, 0, 0],
+      vertices_normals: [], // indices to obtain 'normals' prop
+      vertices_coords: [], // coordinates that are references to actual
+							// vertices
+      smooth_normals: [],
+      flat_normals: [],
+      vertices: [],
+      indices: [] };
+var obj = [];
 const resize = WebGLUtils.genResizeFun(ELEMS.canvas, gl, (w, h, shouldDraw) => {
   updateProjection(w, h);
   shouldDraw && draw();
@@ -117,14 +130,14 @@ gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
 /**
  * Draws the corresponding OBJ loaded.
- * @param {Object} obj object obtained from
- * ObjParser::parse
+ * 
+ * @param {Object}
+ *            obj object obtained from ObjParser::parse
  */
 function draw_obj (obj) {
   if (!obj)
     return 0;
-
-  if (obj.new) { // caching
+	
     VERTICES = new Float32Array(obj.vertices);
     INDICES = new Uint16Array(obj.indices);
     if (_smoothShading)
@@ -132,14 +145,6 @@ function draw_obj (obj) {
     else
       NORMALS = new Float32Array(obj.flat_normals);
 
-    obj.new = false;
-  }
-
-  mat4.scale(M, M, [obj.scale, obj.scale, obj.scale]);
-  mat4.rotateX(M, M, deg_to_rad(_rotations['ROTATE_X']));
-  mat4.rotateY(M, M, deg_to_rad(_rotations['ROTATE_Y']));
-  mat4.rotateZ(M, M, deg_to_rad(_rotations['ROTATE_Z']));
-  mat4.translate(M, M, obj.center_of_mass.map((el) => -el));
 
   gl.bindBuffer(gl.ARRAY_BUFFER, VBUFFER);
   gl.bufferData(gl.ARRAY_BUFFER, VERTICES, gl.STATIC_DRAW);
@@ -149,7 +154,7 @@ function draw_obj (obj) {
 
   gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, IBUFFER);
   gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, INDICES, gl.STATIC_DRAW);
-
+	
   return INDICES.length;
 }
 
@@ -173,26 +178,28 @@ function draw () {
   mat4.lookAt(V, [0.0, 0.0, 10.0],  // eye
                  [0.0, 0.0, 0.0],   // at
                  [0.0, 1.0, 0.0]);  // up
+				 
+  obj.forEach(function (o) {
+	  var N_INDICES = draw_obj(o);
+	  mat4.multiply(VM, V, o.matrix);
+	  mat4.multiply(PVM, P, VM);
+	  mat4.invert(N, o.matrix);
+	  mat4.transpose(N, N);
 
-  var N_INDICES = draw_obj(obj);
+	  gl.uniformMatrix4fv(LOCATIONS.u_ModelMatrix, false, o.matrix);
+	  gl.uniformMatrix4fv(LOCATIONS.u_NormalMatrix, false, N);
+	  gl.uniformMatrix4fv(LOCATIONS.u_MvpMatrix, false, PVM);
 
-  mat4.multiply(VM, V, M);
-  mat4.multiply(PVM, P, VM);
-  mat4.invert(N, M);
-  mat4.transpose(N, N);
-
-  gl.uniformMatrix4fv(LOCATIONS.u_ModelMatrix, false, M);
-  gl.uniformMatrix4fv(LOCATIONS.u_NormalMatrix, false, N);
-  gl.uniformMatrix4fv(LOCATIONS.u_MvpMatrix, false, PVM);
-
-  // executes the shader and draws the geometric
-  // shape in the specified 'mode' using the
-  // indices specified in the buffer obj bound
-  // to gl.ELEMENT_ARRAY_BUFFER.
-  if (!_meshGrid)
-    gl.drawElements(gl.TRIANGLES, N_INDICES, gl.UNSIGNED_SHORT, 0);
-  else
-    gl.drawElements(gl.LINES, N_INDICES, gl.UNSIGNED_SHORT, 0);
+	  // executes the shader and draws the geometric
+	  // shape in the specified 'mode' using the
+	  // indices specified in the buffer obj bound
+	  // to gl.ELEMENT_ARRAY_BUFFER.
+	  if (!_meshGrid)
+		gl.drawElements(gl.TRIANGLES, N_INDICES, gl.UNSIGNED_SHORT, 0);
+	  else
+		gl.drawElements(gl.LINES, N_INDICES, gl.UNSIGNED_SHORT, 0);
+  });
+  
 }
 
 ELEMS.fileinput.addEventListener('change', (ev) => {
@@ -207,9 +214,23 @@ ELEMS.fileinput.addEventListener('change', (ev) => {
   current_file = file;
 
   reader.onload = (ev) => {
-    obj = ObjParser.parse(ev.target.result);
+    objActual = ObjParser.parse(ev.target.result);
+	var o= new Object3D();
+	o.indices = objActual.indices;
+	o.center_of_mass=objActual.center_of_mass;
+	o.vertices_normals=objActual.vertices_normals;
+	o.vertices_coords=objActual.vertices_coords;
+	o.smooth_normals=objActual.smooth_normals;
+	o.flat_normals=objActual.flat_normals;
+	o.vertices=objActual.vertices;
+	o.scale=objActual.scale;
+	o.new=true;
+	o.id=contObjects;
+	o=ajustToLoad(o);
+	obj.push(o);
     resize(false);
-    !_looping && loop();
+   	contObjects++;
+	draw();
   };
 
   reader.readAsText(file);
@@ -228,4 +249,10 @@ function loop () {
     if (_rotating[rot])
       incRotation(rot);
   draw();
+}
+
+function ajustToLoad (object){
+  mat4.scale(object.matrix, object.matrix, [object.scale, object.scale, object.scale]);
+  mat4.translate(object.matrix, object.matrix, object.center_of_mass.map((el) => -el));  
+  return object;
 }
