@@ -20,6 +20,8 @@
     toggleProjection: document.querySelector('.command-toggleProjection'),
     toggleMeshgrid: document.querySelector('.command-toggleMeshgrid'),
     toggleShading: document.querySelector('.command-toggleShading'),
+
+    modeIndicator: document.querySelector('.mode-indicator')
   };
 
   // gl dependent stuff. Must wait for GL context
@@ -72,14 +74,17 @@
 
   // key and mouse bindings
   Keyer.bindDown('shift', function () {
-    console.log('hue');
-  }).bindDown('a', function () {
-    console.log('lol');
+    ELEMS.modeIndicator.className = "mode-indicator select";
+    ELEMS.modeIndicator.innerHTML = "SELECT";
+  }).bindUp('shift', function () {
+    ELEMS.modeIndicator.className = "mode-indicator world";
+    ELEMS.modeIndicator.innerHTML = "WORLD";
   }).bindMouseDown('left', function () {
-    console.log('left');
-  }).process(window);
+    if (!Keyer.isKeyActive('shift'))
+      return;
 
-  console.log(Keyer);
+    console.log('RAY!');
+  }).process(window);
 
 
   root.ELEMS = ELEMS;
