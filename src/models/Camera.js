@@ -34,13 +34,9 @@ Camera.prototype.lookAt = function () {
 	var m1 = new Matrix4();
 
 	return function ( vector ) {
-
 		m1.lookAt( this.position, vector, this.up );
-
 		this.quaternion.setFromRotationMatrix( m1 );
-
 	};
-
 }();
 
 Camera.prototype.updateProjection = function () {
