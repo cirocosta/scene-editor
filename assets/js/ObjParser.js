@@ -78,6 +78,13 @@ function _slicedToArray(arr, i) { if (Array.isArray(arr)) { return arr; } else i
    * @return {Object}
    */
   function parse(text) {
+    var min_x = 999,
+        max_x = -999;
+    var min_y = 999,
+        max_y = -999;
+    var min_z = 999,
+        max_z = -999;
+
     var result = {
       'new': true,
       scale: 0,
@@ -113,6 +120,15 @@ function _slicedToArray(arr, i) { if (Array.isArray(arr)) { return arr; } else i
               z = _line$split$slice$map2[2];
 
           var dist = x * x + y * y + z * z;
+
+          if (x > max_x) max_x = x;
+          if (x < min_x) min_x = x;
+
+          if (y > max_y) max_y = y;
+          if (y < min_y) min_y = y;
+
+          if (z > max_z) max_z = z;
+          if (z < min_z) min_z = z;
 
           result.center_of_mass[0] += x;
           result.center_of_mass[1] += y;
@@ -244,6 +260,9 @@ function _slicedToArray(arr, i) { if (Array.isArray(arr)) { return arr; } else i
         return elem / result.vertices_coords.length;
       });
     }
+
+    result.vecMin = vec3.clone([min_x, min_y, min_z]);
+    result.vecMax = vec3.clone([max_x, max_y, max_z]);
 
     return result;
   }
