@@ -34,14 +34,19 @@ Camera.prototype.lookAt = function () {
 	var m1 = new Matrix4();
 
 	return function ( vector ) {
-
 		m1.lookAt( this.position, vector, this.up );
-
 		this.quaternion.setFromRotationMatrix( m1 );
-
 	};
-
 }();
+
+Camera.prototype.updateProjection = function () {
+  var ar = w/h;
+
+  if (_perspective)
+    mat4.perspective(P, deg_to_rad(30.0), ar, 0.1, 50.0);
+  else
+    mat4.ortho(P, -2.5 * ar, 2.5 * ar, -2.5, 2.5, 0.1, 50.0);
+};
 
 Camera.prototype.clone = function ( camera ) {
 

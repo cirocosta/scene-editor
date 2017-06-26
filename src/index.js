@@ -108,12 +108,12 @@ function draw_obj (obj) {
   if (!obj)
     return 0;
 
-    VERTICES = new Float32Array(obj.vertices);
-    INDICES = new Uint16Array(obj.indices);
-    if (_smoothShading)
-      NORMALS = new Float32Array(obj.smooth_normals);
-    else
-      NORMALS = new Float32Array(obj.flat_normals);
+  VERTICES = new Float32Array(obj.vertices);
+  INDICES = new Uint16Array(obj.indices);
+  if (_smoothShading)
+    NORMALS = new Float32Array(obj.smooth_normals);
+  else
+    NORMALS = new Float32Array(obj.flat_normals);
 
   gl.bindBuffer(gl.ARRAY_BUFFER, VBUFFER);
   gl.bufferData(gl.ARRAY_BUFFER, VERTICES, gl.STATIC_DRAW);
@@ -127,6 +127,7 @@ function draw_obj (obj) {
   return INDICES.length;
 }
 
+// TODO remove this and use Camera.updateProjection
 function updateProjection (w, h) {
   var ar = w/h;
 

@@ -81,3 +81,16 @@ button {
   padding: 2px;
   margin-left: 4px;
 }
+
+.mode-indicator.world {
+  background: grey;
+}
+
+.mode-indicator.select {
+  background: purple !important;
+}
+
+.mode-indicator.edit {
+  background: blue !important;
+}
+
